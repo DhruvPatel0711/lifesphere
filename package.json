@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "db:push": "drizzle-kit push --force"
+    "db:push": "drizzle-kit push --force",
+    "db:seed": "node scratch/run_seed.js"
   },
   "dependencies": {
     "@auth/drizzle-adapter": "^1.11.3",
