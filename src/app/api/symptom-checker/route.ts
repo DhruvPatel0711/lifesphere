@@ -99,14 +99,22 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Symptom description is required." }, { status: 400 });
     }
 
-    // Attempt Groq LLM Generation
-    try {
-      if (process.env.GROQ_API_KEY && !process.env.GROQ_API_KEY.includes("your_")) {
+    const apiKey = process.env.OPENROUTER_API_KEY || process.env.GROQ_API_KEY || process.env.OPENAI_API_KEY;
+    const isOpenRouter = !!apiKey && apiKey.startsWith("sk-or-");
+
+    if (apiKey && !apiKey.includes("your_")) {
+      try {
         const chatModel = new ChatOpenAI({
-          modelName: "llama-3.3-70b-versatile",
-          openAIApiKey: process.env.GROQ_API_KEY,
+          modelName: isOpenRouter ? "meta-llama/llama-3.3-70b-instruct:free" : "llama-3.3-70b-versatile",
+          openAIApiKey: apiKey,
           configuration: {
-            baseURL: "https://api.groq.com/openai/v1",
+            baseURL: isOpenRouter ? "https://openrouter.ai/api/v1" : "https://api.groq.com/openai/v1",
+            defaultHeaders: isOpenRouter
+              ? {
+                  "HTTP-Referer": "http://localhost:3000",
+                  "X-Title": "LifeOS AI Health Platform",
+                }
+              : undefined,
           },
           temperature: 0.2,
         });
@@ -132,9 +140,9 @@ export async function POST(req: NextRequest) {
           parsed.disclaimer = MEDICAL_DISCLAIMER;
           return NextResponse.json({ success: true, assessment: parsed });
         }
+      } catch (llmErr) {
+        console.warn("[Symptom Checker] OpenRouter/LLM API call failed, using intelligent clinical fallback:", llmErr);
       }
-    } catch (llmErr) {
-      console.warn("[Symptom Checker] LLM API call failed, switching to Intelligent Clinical Engine:", llmErr);
     }
 
     // Fallback: Intelligent Rule-Based Clinical Triage Engine

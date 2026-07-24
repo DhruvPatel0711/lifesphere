@@ -25,7 +25,7 @@ function checkRateLimit(ip: string): boolean {
   return true;
 }
 
-const systemPrompt = `You are a clinical AI medical & health assistant for LifeOS. Answer the user's question accurately using the provided clinical context, medical records, and health guidelines. Keep your responses structured, clear, and empathetic. Include practical health advice when applicable.
+const systemPrompt = `You are an expert clinical AI medical & health assistant for LifeOS. Answer the user's question accurately, concisely, and empathetically using the provided clinical context, medical records, and medical best practices.
 
 Clinical & Medical Record Context:
 {context}`;
@@ -35,6 +35,10 @@ function generateRuleBasedChatResponse(message: string, contextSummary: string):
 
   if (q.includes("lipid") || q.includes("lab") || q.includes("report") || q.includes("finding") || q.includes("test")) {
     return `Based on your medical records:\n\n• **Annual Lipid & CBC Panel (2026-07-20)**:\n  - Total Cholesterol: 210 mg/dL (Borderline High)\n  - Triglycerides: 165 mg/dL\n  - HDL Cholesterol: 48 mg/dL\n  - LDL Cholesterol: 129 mg/dL\n  - Hemoglobin & White Blood Count: Normal range\n\n**Recommendation**: Maintain a low-saturated-fat diet, engage in 150 mins of moderate aerobic exercise per week, and recheck your lipid panel in 6 months as advised by Dr. Jane Smith.`;
+  }
+
+  if (q.includes("nausea") || q.includes("stomach") || q.includes("sick") || q.includes("vomit")) {
+    return `Here is clinical guidance for nausea:\n\n1. **Hydration**: Sip clear fluids like water, electrolyte solution, or ginger tea slowly in small amounts.\n2. **Diet**: Follow the BRAT diet (Bananas, Rice, Applesauce, Toast) once nausea subsides. Avoid greasy, spicy, or heavy foods.\n3. **Rest**: Sit upright after eating; avoid lying flat for at least 30-60 minutes.\n\n*Warning*: Seek immediate medical attention if accompanied by high fever, severe abdominal pain, or blood in vomit.`;
   }
 
   if (q.includes("diet") || q.includes("meal") || q.includes("nutrition") || q.includes("food") || q.includes("calorie") || q.includes("snack") || q.includes("protein")) {
@@ -53,7 +57,7 @@ function generateRuleBasedChatResponse(message: string, contextSummary: string):
     return `Here is your Active Prescription Summary from your health profile:\n\n• **Lisinopril 10 mg**: Take 1 tablet daily every morning with water (Purpose: Blood pressure management | Prescribed by Dr. Jane Smith).\n• **Daily Multivitamin Complex**: Take 1 tablet daily after breakfast.\n\n*Note*: Always take your blood pressure medications consistently at the same time each day.`;
   }
 
-  return `Here is the clinical assessment for your query: "${message}"\n\n${contextSummary ? contextSummary + "\n\n" : ""}**Clinical Guidance**: For general health maintenance, ensure balanced daily macronutrient intake, consistent hydration (2-3L/day), 7-8 hours of quality sleep, and routine medical checkups with your primary physician.`;
+  return `Here is the clinical guidance for your query: "${message}"\n\n${contextSummary ? contextSummary + "\n\n" : ""}**Clinical Guidance**: For general health maintenance, ensure balanced daily macronutrient intake, consistent hydration (2-3L/day), 7-8 hours of quality sleep, and routine medical checkups with your primary physician.`;
 }
 
 export async function POST(req: NextRequest) {
@@ -103,14 +107,23 @@ export async function POST(req: NextRequest) {
       console.warn("DB Context Notice:", dbErr);
     }
 
-    // Attempt Groq LLM Generation
-    try {
-      if (process.env.GROQ_API_KEY && !process.env.GROQ_API_KEY.includes("your_")) {
+    // Determine API Provider & Key (OpenRouter or Groq)
+    const apiKey = process.env.OPENROUTER_API_KEY || process.env.GROQ_API_KEY || process.env.OPENAI_API_KEY;
+    const isOpenRouter = !!apiKey && apiKey.startsWith("sk-or-");
+
+    if (apiKey && !apiKey.includes("your_")) {
+      try {
         const chatModel = new ChatOpenAI({
-          modelName: "llama-3.3-70b-versatile",
-          openAIApiKey: process.env.GROQ_API_KEY,
+          modelName: isOpenRouter ? "meta-llama/llama-3.3-70b-instruct:free" : "llama-3.3-70b-versatile",
+          openAIApiKey: apiKey,
           configuration: {
-            baseURL: "https://api.groq.com/openai/v1",
+            baseURL: isOpenRouter ? "https://openrouter.ai/api/v1" : "https://api.groq.com/openai/v1",
+            defaultHeaders: isOpenRouter
+              ? {
+                  "HTTP-Referer": "http://localhost:3000",
+                  "X-Title": "LifeOS AI Health Platform",
+                }
+              : undefined,
           },
           temperature: 0.3,
         });
@@ -121,7 +134,7 @@ export async function POST(req: NextRequest) {
         ]);
 
         const formattedPrompt = await promptTemplate.formatMessages({
-          context: context || "No specific medical records found.",
+          context: context || "No specific medical records found for this patient.",
           input: message,
         });
 
@@ -130,9 +143,9 @@ export async function POST(req: NextRequest) {
           success: true,
           answer: response.content.toString(),
         });
+      } catch (llmErr) {
+        console.warn("[AI Chat] OpenRouter/LLM API call failed, using intelligent clinical fallback:", llmErr);
       }
-    } catch (llmErr) {
-      console.warn("[AI Chat] LLM API call failed, switching to Intelligent Clinical Engine:", llmErr);
     }
 
     // Fallback: Intelligent Clinical Health Engine
