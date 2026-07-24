@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 import { Stethoscope, Send, Activity, AlertTriangle, ShieldAlert, CheckCircle2 } from "lucide-react";
+import FormattedMarkdown from "@/components/FormattedMarkdown";
+import AIExportToolbar from "@/components/AIExportToolbar";
 
 interface AssessmentResult {
   urgency: "Low" | "Medium" | "High" | "Emergency";
@@ -58,6 +60,10 @@ export default function AISymptomPage() {
         return <span className="bg-emerald-600 text-white font-bold px-3 py-1 rounded-full text-xs uppercase tracking-wider">🟢 Low Risk</span>;
     }
   };
+
+  const exportText = assessment
+    ? `SYMPTOM TRIAGE REPORT\nUrgency: ${assessment.urgency}\nSpecialist: ${assessment.recommendedSpecialist}\n\nSummary:\n${assessment.summary}\n\nPotential Causes:\n${assessment.possibleCauses?.join("\n")}\n\nNext Steps:\n${assessment.nextSteps?.join("\n")}\n\n${assessment.disclaimer}`
+    : "";
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
@@ -118,14 +124,12 @@ export default function AISymptomPage() {
               {getUrgencyBadge(assessment.urgency)}
             </div>
 
-            <p className="text-sm text-slate-700 leading-relaxed font-medium">
-              {assessment.summary}
-            </p>
+            <FormattedMarkdown content={assessment.summary} />
 
             <div className="grid md:grid-cols-2 gap-4">
               <div className="bg-white p-4 rounded-xl border border-slate-200 space-y-2">
                 <h4 className="font-bold text-xs text-slate-900 uppercase tracking-wider">Potential Causes</h4>
-                <ul className="text-xs text-slate-600 space-y-1 list-disc list-inside">
+                <ul className="text-xs text-slate-700 space-y-1 list-disc list-inside">
                   {assessment.possibleCauses?.map((c, i) => (
                     <li key={i}>{c}</li>
                   ))}
@@ -149,6 +153,8 @@ export default function AISymptomPage() {
                 ))}
               </ul>
             </div>
+
+            <AIExportToolbar title="AI Symptom Triage Report" content={exportText} />
 
             {/* Mandatory Response Disclaimer */}
             <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-[11px] text-red-800 font-medium flex items-start gap-2">

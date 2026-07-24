@@ -5,10 +5,10 @@ import { eq } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { NextResponse } from "next/server";
 
-export type Role = "patient" | "doctor" | "admin";
+export type Role = "user" | "admin";
 
 /**
- * Get current authenticated user with DB role
+ * Get current authenticated user
  */
 export async function getCurrentUser() {
   const session = await auth();
@@ -28,13 +28,10 @@ export async function requireAuthPage() {
 }
 
 /**
- * Enforce specific role requirement for Page routes
+ * Enforce authentication for Page routes (Unified User Access)
  */
-export async function requireRolePage(allowedRoles: Role[]) {
+export async function requireRolePage(_allowedRoles?: string[]) {
   const user = await requireAuthPage();
-  if (!allowedRoles.includes(user.role as Role)) {
-    redirect("/dashboard?error=AccessDenied");
-  }
   return user;
 }
 
@@ -50,21 +47,10 @@ export async function requireAuthApi() {
 }
 
 /**
- * Enforce role requirement for API routes (returns 403 JSON if forbidden)
+ * Enforce authentication for API routes (Unified User Access)
  */
-export async function requireRoleApi(allowedRoles: Role[]) {
+export async function requireRoleApi(_allowedRoles?: string[]) {
   const { errorResponse, user } = await requireAuthApi();
   if (errorResponse) return { errorResponse, user: null };
-
-  if (!user || !allowedRoles.includes(user.role as Role)) {
-    return {
-      errorResponse: NextResponse.json(
-        { error: `Forbidden: Requires one of [${allowedRoles.join(", ")}] roles` },
-        { status: 403 }
-      ),
-      user: null,
-    };
-  }
-
   return { errorResponse: null, user };
 }

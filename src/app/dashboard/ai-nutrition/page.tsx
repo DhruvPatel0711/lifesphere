@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 import { Utensils, Sparkles } from "lucide-react";
+import FormattedMarkdown from "@/components/FormattedMarkdown";
+import AIExportToolbar from "@/components/AIExportToolbar";
 
 export default function AINutritionPage() {
   const [dietType, setDietType] = useState("Balanced");
@@ -20,7 +22,7 @@ export default function AINutritionPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          message: `Generate a personalized daily meal plan for diet type: "${dietType}", target calorie count: "${targetCalories} kcal", and preference: "${preferences}". Include Breakfast, Lunch, Evening Snack, and Dinner with macro breakdowns (Protein, Carbs, Fats).`,
+          message: `Generate a detailed, tabulated daily meal plan for diet type: "${dietType}", target calorie count: "${targetCalories} kcal", and preference: "${preferences}". Include Breakfast, Lunch, Evening Snack, and Dinner with a Markdown table detailing food items, calorie counts, and protein/carb/fat macro breakdowns.`,
         }),
       });
 
@@ -100,9 +102,8 @@ export default function AINutritionPage() {
             <h3 className="font-bold text-sm text-emerald-900 flex items-center gap-2">
               <Utensils className="w-4 h-4 text-emerald-600" /> Customized Daily Meal Plan
             </h3>
-            <div className="text-xs text-slate-800 leading-relaxed whitespace-pre-line font-sans">
-              {mealPlan}
-            </div>
+            <FormattedMarkdown content={mealPlan} />
+            <AIExportToolbar title="AI Nutrition & Diet Report" content={mealPlan} />
           </div>
         )}
       </div>

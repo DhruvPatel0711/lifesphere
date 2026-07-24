@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
-import { ChatOpenAI } from "@langchain/openai";
 
 export const dynamic = "force-dynamic";
 
@@ -66,7 +65,7 @@ function generateRuleBasedTriage(symptoms: string) {
     nextSteps.push("Consult a primary care doctor for comprehensive evaluation", "Log symptom frequency and intensity daily");
   }
 
-  const summary = `Patient reports: "${symptoms}". Clinical triage suggests a ${urgency.toLowerCase()}-priority evaluation focused on ${recommendedSpecialist.toLowerCase()}.`;
+  const summary = `Patient reports: "${symptoms}". Clinical triage suggests a **${urgency.toUpperCase()}** priority evaluation focused on **${recommendedSpecialist}**.`;
 
   return {
     urgency,
@@ -100,28 +99,12 @@ export async function POST(req: NextRequest) {
     }
 
     const apiKey = process.env.OPENROUTER_API_KEY || process.env.GROQ_API_KEY || process.env.OPENAI_API_KEY;
-    const isOpenRouter = !!apiKey && apiKey.startsWith("sk-or-");
 
     if (apiKey && !apiKey.includes("your_")) {
       try {
-        const chatModel = new ChatOpenAI({
-          modelName: isOpenRouter ? "meta-llama/llama-3.3-70b-instruct:free" : "llama-3.3-70b-versatile",
-          openAIApiKey: apiKey,
-          configuration: {
-            baseURL: isOpenRouter ? "https://openrouter.ai/api/v1" : "https://api.groq.com/openai/v1",
-            defaultHeaders: isOpenRouter
-              ? {
-                  "HTTP-Referer": "http://localhost:3000",
-                  "X-Title": "LifeOS AI Health Platform",
-                }
-              : undefined,
-          },
-          temperature: 0.2,
-        });
-
         const systemPrompt = `You are an AI Clinical Triage Assistant. Analyze the user's reported symptoms and return a structured assessment in STRICT JSON format with the following keys:
         - urgency: "Low" | "Medium" | "High" | "Emergency"
-        - summary: string (2 sentence overview of symptoms)
+        - summary: string (2 sentence overview of symptoms in clean Markdown)
         - possibleCauses: string[] (array of 2-4 potential non-conclusive conditions)
         - recommendedSpecialist: string (e.g. "Cardiologist", "General Physician", "Neurologist")
         - nextSteps: string[] (array of 2-3 safe next action steps)
@@ -129,19 +112,37 @@ export async function POST(req: NextRequest) {
 
         Return ONLY a valid JSON object matching this schema.`;
 
-        const response = await chatModel.invoke([
-          ["system", systemPrompt],
-          ["human", symptoms],
-        ]);
+        const openRouterRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${apiKey}`,
+            "HTTP-Referer": "http://localhost:3000",
+            "X-Title": "LifeOS AI Health Platform",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            model: "openrouter/auto",
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: symptoms },
+            ],
+            temperature: 0.2,
+          }),
+        });
 
-        const jsonMatch = response.content.toString().match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-          const parsed = JSON.parse(jsonMatch[0]);
-          parsed.disclaimer = MEDICAL_DISCLAIMER;
-          return NextResponse.json({ success: true, assessment: parsed });
+        const openRouterData = await openRouterRes.json();
+        const content = openRouterData?.choices?.[0]?.message?.content;
+
+        if (openRouterRes.ok && content) {
+          const jsonMatch = content.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            const parsed = JSON.parse(jsonMatch[0]);
+            parsed.disclaimer = MEDICAL_DISCLAIMER;
+            return NextResponse.json({ success: true, assessment: parsed });
+          }
         }
       } catch (llmErr) {
-        console.warn("[Symptom Checker] OpenRouter/LLM API call failed, using intelligent clinical fallback:", llmErr);
+        console.warn("[Symptom Checker] OpenRouter API call failed, using intelligent clinical fallback:", llmErr);
       }
     }
 
