@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { Stethoscope, Send, Activity, AlertTriangle, ShieldAlert, CheckCircle2 } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Stethoscope, Send, Activity, AlertTriangle, ShieldAlert, CheckCircle2, Trash2 } from "lucide-react";
 import FormattedMarkdown from "@/components/FormattedMarkdown";
 import AIExportToolbar from "@/components/AIExportToolbar";
 
@@ -14,10 +14,45 @@ interface AssessmentResult {
   disclaimer: string;
 }
 
+const STORAGE_KEY = "lifesphere_ai_symptom_assessment";
+const INPUT_KEY = "lifesphere_ai_symptom_input";
+
 export default function AISymptomPage() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [assessment, setAssessment] = useState<AssessmentResult | null>(null);
+
+  // Load state on mount
+  useEffect(() => {
+    try {
+      const savedInput = localStorage.getItem(INPUT_KEY);
+      if (savedInput) setInput(savedInput);
+
+      const savedAssessment = localStorage.getItem(STORAGE_KEY);
+      if (savedAssessment) setAssessment(JSON.parse(savedAssessment));
+    } catch (e) {
+      console.error("Failed to load saved symptom assessment:", e);
+    }
+  }, []);
+
+  // Save state on updates
+  useEffect(() => {
+    try {
+      if (assessment) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(assessment));
+        localStorage.setItem(INPUT_KEY, input);
+      }
+    } catch (e) {
+      console.error("Failed to save symptom assessment:", e);
+    }
+  }, [assessment, input]);
+
+  const handleClear = () => {
+    setAssessment(null);
+    setInput("");
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(INPUT_KEY);
+  };
 
   async function handleAnalyze(e: React.FormEvent) {
     e.preventDefault();
@@ -67,13 +102,26 @@ export default function AISymptomPage() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-          <Stethoscope className="w-7 h-7 text-teal-600" /> AI Symptom Checker & Triage
-        </h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Describe your symptoms to receive an instant AI Triage evaluation, urgency breakdown, and specialist guidance.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+            <Stethoscope className="w-7 h-7 text-teal-600" /> AI Symptom Checker & Triage
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Describe your symptoms to receive an instant AI Triage evaluation, urgency breakdown, and specialist guidance.
+          </p>
+        </div>
+
+        {assessment && (
+          <button
+            onClick={handleClear}
+            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-red-600 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-red-200 transition-colors bg-white"
+            title="Clear Assessment"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            Clear Output
+          </button>
+        )}
       </div>
 
       {/* Prominent Non-Diagnostic Medical Disclaimer */}

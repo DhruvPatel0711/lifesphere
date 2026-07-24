@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
-import { Send, Mic, Bot } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Send, Mic, Bot, Trash2 } from "lucide-react";
 import FormattedMarkdown from "@/components/FormattedMarkdown";
 import AIExportToolbar from "@/components/AIExportToolbar";
 
@@ -10,11 +10,41 @@ interface Message {
   content: string;
 }
 
+const STORAGE_KEY = "lifesphere_ai_chat_messages";
+
 export default function AIChatPage() {
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
+
+  // Load chat history from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        setMessages(JSON.parse(saved));
+      }
+    } catch (e) {
+      console.error("Failed to load chat history:", e);
+    }
+  }, []);
+
+  // Save chat history to localStorage on updates
+  useEffect(() => {
+    try {
+      if (messages.length > 0) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(messages));
+      }
+    } catch (e) {
+      console.error("Failed to save chat history:", e);
+    }
+  }, [messages]);
+
+  const handleClearHistory = () => {
+    setMessages([]);
+    localStorage.removeItem(STORAGE_KEY);
+  };
 
   const sendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,6 +118,17 @@ export default function AIChatPage() {
             <p className="text-xs text-slate-500">Retrieval Augmented Generation (RAG) initialized</p>
           </div>
         </div>
+
+        {messages.length > 0 && (
+          <button
+            onClick={handleClearHistory}
+            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-red-600 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-red-200 transition-colors"
+            title="Clear Chat History"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            Clear History
+          </button>
+        )}
       </div>
 
       {/* Chat Messages */}

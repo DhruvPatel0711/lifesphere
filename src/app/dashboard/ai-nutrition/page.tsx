@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useState } from "react";
-import { Utensils, Sparkles } from "lucide-react";
+import React, { useState, useEffect } from "react";
+import { Utensils, Sparkles, Trash2 } from "lucide-react";
 import FormattedMarkdown from "@/components/FormattedMarkdown";
 import AIExportToolbar from "@/components/AIExportToolbar";
+
+const STORAGE_KEY = "lifesphere_ai_nutrition_plan";
 
 export default function AINutritionPage() {
   const [dietType, setDietType] = useState("Balanced");
@@ -11,6 +13,34 @@ export default function AINutritionPage() {
   const [preferences, setPreferences] = useState("Indian Vegetarian Cuisine");
   const [loading, setLoading] = useState(false);
   const [mealPlan, setMealPlan] = useState<string | null>(null);
+
+  // Load state on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (saved) {
+        setMealPlan(saved);
+      }
+    } catch (e) {
+      console.error("Failed to load saved nutrition plan:", e);
+    }
+  }, []);
+
+  // Save state on updates
+  useEffect(() => {
+    try {
+      if (mealPlan) {
+        localStorage.setItem(STORAGE_KEY, mealPlan);
+      }
+    } catch (e) {
+      console.error("Failed to save nutrition plan:", e);
+    }
+  }, [mealPlan]);
+
+  const handleClear = () => {
+    setMealPlan(null);
+    localStorage.removeItem(STORAGE_KEY);
+  };
 
   async function handleGenerateDiet(e: React.FormEvent) {
     e.preventDefault();
@@ -37,13 +67,26 @@ export default function AINutritionPage() {
 
   return (
     <div className="p-6 max-w-4xl mx-auto space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
-          <Utensils className="w-7 h-7 text-emerald-600" /> AI Nutrition & Diet Planner
-        </h1>
-        <p className="text-sm text-slate-500 mt-1">
-          Receive customized meal plans, macronutrient ratios, and dietary advice aligned with your health goals.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+            <Utensils className="w-7 h-7 text-emerald-600" /> AI Nutrition & Diet Planner
+          </h1>
+          <p className="text-sm text-slate-500 mt-1">
+            Receive customized meal plans, macronutrient ratios, and dietary advice aligned with your health goals.
+          </p>
+        </div>
+
+        {mealPlan && (
+          <button
+            onClick={handleClear}
+            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-red-600 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-red-200 transition-colors bg-white"
+            title="Clear Plan"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+            Clear Output
+          </button>
+        )}
       </div>
 
       <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-6">
