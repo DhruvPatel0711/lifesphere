@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
-import { medicalRecords, medicines, healthEntries } from "@/drizzle/schema";
+import { medicalRecords, medicines } from "@/drizzle/schema";
 import { eq, isNull, and } from "drizzle-orm";
 
 const rateLimitMap = new Map<string, { count: number; resetTime: number }>();
@@ -98,7 +98,7 @@ export async function POST(req: NextRequest) {
         .all();
 
       const recordContext = userRecords
-        .map(r => `[Record: ${r.title} | Category: ${r.category} | Date: ${r.date || "N/A"}] Findings: ${r.findings || r.summary || "None"}`)
+        .map(r => `[Record: ${r.title} | Category: ${r.category} | Date: ${r.date || "N/A"}] Findings: ${r.findings || r.notes || "None"}`)
         .join("\n");
 
       const medContext = userMeds
@@ -114,8 +114,6 @@ export async function POST(req: NextRequest) {
 
     if (apiKey && !apiKey.includes("your_")) {
       try {
-        const fullPrompt = systemPrompt.replace("{context}", context || "No specific medical records found.") + "\n\nUser Question: " + message;
-        
         const openRouterRes = await fetch("https://openrouter.ai/api/v1/chat/completions", {
           method: "POST",
           headers: {

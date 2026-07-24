@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { auth } from "@/auth";
 import { db } from "@/lib/db";
 import { users } from "@/drizzle/schema";
@@ -30,7 +31,7 @@ export async function requireAuthPage() {
 /**
  * Enforce authentication for Page routes (Unified User Access)
  */
-export async function requireRolePage(_allowedRoles?: string[]) {
+export async function requireRolePage(allowedRoles?: string[]) {
   const user = await requireAuthPage();
   return user;
 }
@@ -49,7 +50,7 @@ export async function requireAuthApi() {
 /**
  * Enforce authentication for API routes (Unified User Access)
  */
-export async function requireRoleApi(_allowedRoles?: string[]) {
+export async function requireRoleApi(allowedRoles?: string[]) {
   const { errorResponse, user } = await requireAuthApi();
   if (errorResponse) return { errorResponse, user: null };
   return { errorResponse: null, user };
