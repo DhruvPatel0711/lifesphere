@@ -1,0 +1,88 @@
+==================================================
+[TEST] DEEP TESTING ALL AI FEATURES IN HEALTHCARE AI
+Groq API Key Configured: True
+OpenRouter API Key Configured: True
+Groq Model: llama-3.3-70b-versatile
+==================================================
+
+--- 1. Testing AI Core Service (Groq / OpenRouter) ---
+AI Assistant Response (first 150 chars):
+**Paracetamol** is a common pain reliever used to reduce fever and relieve mild to moderate pain. It is often used to treat headaches, toothaches, and...
+
+--- 2. Testing AI Symptom Triage (generate_json_response) ---
+Symptom JSON Response Keys: ['urgency', 'conditions', 'specialists', 'recommendations']
+Full Symptom Output: {
+  "urgency": "High",
+  "conditions": [
+    {
+      "condition": "Influenza",
+      "probability": 40
+    },
+    {
+      "condition": "Meningitis",
+      "probability": 20
+    },
+    {
+      "condition": "Viral Meningitis",
+      "probability": 15
+    },
+    {
+      "condition": "Bacterial Meningit...
+
+--- 3. Testing Medical PDF Report Parser (fitz + report_parser JSON) ---
+PDF Extracted Text Length: 14657 chars
+Sample PDF Text Snippet: - 1 - 
+ 
+SAMPLE 
+(All names and details provided in this sample are fictitious.  
+Some fields have been deliberately left blank.) 
+ 
+ 
+MEDICAL REPORT 
+ 
+SECTION 1: PATIENT’S PARTICULARS 
+ 
+Full name o...
+Parsed Metrics from PDF: {
+  "Age": 55
+}
+
+--- 4. Testing AI Medical Record Summary ---
+AI Summary Result:
+**Blood Test Report**
+* **Hemoglobin:** 13.5
+* **Blood Sugar:** 110
+* **Cholesterol:** 195
+**Summary:** Normal routine checkup results....
+
+--- 5. Testing AI Record Comparison ---
+AI Comparison Result:
+* **Hemoglobin levels** increased from 12.0 to 14.2.
+* Change occurred over 8 months.
+* **Normal range** typically between 13.5-17.5 for adults.
+* **Increase** may indicate improved iron levels.
+* **F...
+
+--- 6. Testing AI Nutrition Planner ---
+AI Nutrition Result:
+Given your profile, I've created a 1-day meal plan that incorporates Indian vegetarian cuisine and focuses on heart-healthy options to help manage high cholesterol. Please note that this meal plan is ...
+
+--- 7. Testing AI Fitness Coach ---
+AI Fitness Result:
+Congratulations on taking the first step towards a healthier lifestyle. As a beginner, it's essential to start with a manageable and progressive workout routine. Considering your goal of weight loss, ...
+
+--- 8. Testing AI Mental Support ---
+AI Mental Result:
+I can sense the weight of responsibility and pressure you're feeling right now. It's completely normal to feel overwhelmed with work deadlines and anxious about exams. It's great that you're acknowled...
+
+==================================================
+[SUMMARY] COMPREHENSIVE AI FEATURE TEST SUMMARY
+==================================================
+* CORE_ASSISTANT: PASS
+* SYMPTOM_TRIAGE: PASS
+* PDF_PARSING: PASS (1 metrics extracted)
+* RECORD_SUMMARY: PASS
+* RECORD_COMPARISON: PASS
+* NUTRITION_PLANNER: PASS
+* FITNESS_COACH: PASS
+* MENTAL_SUPPORT: PASS

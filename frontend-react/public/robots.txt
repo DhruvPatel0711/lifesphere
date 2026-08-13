@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Allow: /shared/
+Disallow: /app/
+Disallow: /admin/
+Disallow: /api/
+
+Sitemap: https://healthcare-ai.app/sitemap.xml

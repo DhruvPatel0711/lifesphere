@@ -1,0 +1,9 @@
+PATIENT MEDICAL LAB REPORT
+Patient Name: Test Subject
+Date: 2026-08-11
+Dr. Sarah Jenkins
+City Diagnostics Center
+Hemoglobin: 14.5 g/dL
+Fasting Blood Sugar: 95 mg/dL
+Total Cholesterol: 185 mg/dL
+BP: 120/80 mmHg

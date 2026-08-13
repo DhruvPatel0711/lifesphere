@@ -1,0 +1,15 @@
+
+    CENTRAL CITY CLINIC
+    Patient: AI Pipeline Tester
+    Date: 2026-08-11
+    
+    LABORATORY TEST RESULTS
+    -----------------------------------
+    Heart Rate: 72 bpm
+    Blood Pressure: 120/80 mmHg
+    Hemoglobin: 14.2 g/dL
+    Fasting Blood Sugar: 95 mg/dL
+    Total Cholesterol: 180 mg/dL
+    
+    Notes: All values are within normal ranges.
+    
